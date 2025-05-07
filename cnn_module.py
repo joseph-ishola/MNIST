@@ -5,7 +5,8 @@ This module provides functions for:
 1. Data preprocessing of MNIST dataset
 2. Creating and training CNN models
 3. Processing and predicting on handwritten digit images
-4. Evaluating model performance
+4. Handles both single and multiple image predictions with visualization and saving.
+5. Evaluating model performance
 """
 
 import numpy as np
@@ -18,6 +19,9 @@ import cv2
 import os
 import random
 from typing import Tuple, List, Dict, Any, Union, Optional
+import glob
+
+
 
 # Class for tracking metrics during training
 class MetricsHistory(tf.keras.callbacks.Callback):
@@ -260,8 +264,10 @@ def plot_metrics(history: MetricsHistory) -> None:
     plt.show()
 
 
-def preprocess_handwritten_digit(image_path: str, 
-                                 display: bool = True) -> np.ndarray:
+def preprocess_handwritten_digit(image_path: str,
+                                 display: bool = True,
+                                 return_original: bool = False) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+
     """
     Preprocess a handwritten digit image to match MNIST format.
     
@@ -271,11 +277,13 @@ def preprocess_handwritten_digit(image_path: str,
         Path to the handwritten digit image
     display : bool
         Whether to display the preprocessed image
+    return_original : bool
+        Whether to return the original image along with the preprocessed one
         
     Returns:
     --------
-    np.ndarray
-        Preprocessed image in format ready for model prediction
+    np.ndarray or Tuple[np.ndarray, np.ndarray]
+        Preprocessed image (and original image if return_original=True)
     """
     # Read the image
     img = cv2.imread(image_path)
@@ -283,6 +291,10 @@ def preprocess_handwritten_digit(image_path: str,
     # Handle case where image couldn't be read
     if img is None:
         raise ValueError(f"Could not read image from {image_path}. Please check the file path.")
+    
+    # Store original image for potential return
+    # Convert from BGR to RGB for displaying with matplotlib
+    original_img = cv2.cvtColor(img.copy(), cv2.COLOR_BGR2RGB)
     
     # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -333,19 +345,40 @@ def preprocess_handwritten_digit(image_path: str,
     digit = digit.astype('float32') / 255.0
     
     # Display the processed image if requested
-    if display:
+    if display and return_original:
+        # Create a side-by-side display of original and processed images
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+        
+        # Show original image
+        ax1.imshow(original_img)
+        ax1.set_title("Original Image")
+        ax1.axis('off')
+        
+        # Show processed image
+        ax2.imshow(digit, cmap='gray')
+        ax2.set_title("Processed Image")
+        ax2.axis('off')
+        
+        plt.tight_layout()
+        plt.show()
+    elif display:
+        # Just show the processed image
         plt.figure(figsize=(5, 5))
         plt.imshow(digit, cmap='gray')
         plt.title("Processed Handwritten Digit")
         plt.axis('off')
         plt.show()
     
-    return digit
+    if return_original:
+        return digit, original_img
+    else:
+        return digit
 
 
-def predict_digit(model: keras.Sequential, 
+def predict_digit(model: keras.Sequential,
                   preprocessed_digit: np.ndarray,
                   display: bool = True) -> Tuple[int, float, np.ndarray]:
+
     """
     Make a prediction using the model on a preprocessed digit.
     
@@ -367,7 +400,7 @@ def predict_digit(model: keras.Sequential,
     sample = preprocessed_digit.reshape(1, 28, 28, 1)
     
     # Get prediction
-    prediction = model.predict(sample)[0]
+    prediction = model.predict(sample, verbose=0)[0]  # Set verbose=0 to suppress prediction messages
     predicted_digit = np.argmax(prediction)
     confidence = prediction[predicted_digit] * 100
     
@@ -389,45 +422,115 @@ def predict_digit(model: keras.Sequential,
     return predicted_digit, confidence, prediction
 
 
-def batch_predict_digits(model: keras.Sequential, 
-                         image_paths: List[str],
-                         display: bool = True) -> List[Dict[str, Any]]:
+def predict_digits(model: keras.Sequential,
+                   image_paths: Union[str, List[str]],
+                   save_results: bool = True,
+                   save_dir: str = 'preprocessed_digits',
+                   display: bool = True) -> List[Dict[str, Any]]:
+                                    
     """
-    Process and predict multiple handwritten digit images.
+    Unified function to preprocess and predict handwritten digit images.
+    Handles both single image and multiple images.
     
     Parameters:
     -----------
     model : keras.Sequential
         Trained model for prediction
-    image_paths : List[str]
-        List of paths to handwritten digit images
+    image_paths : str or List[str]
+        Path(s) to handwritten digit image(s)
+    save_results : bool
+        Whether to save the visualizations to disk
+    save_dir : str
+        Base directory to save visualizations
     display : bool
-        Whether to display processed images and predictions
+        Whether to display the visualizations
         
     Returns:
     --------
     List[Dict[str, Any]]
         List of dictionaries containing prediction results for each image
     """
+    # Convert single path to list for unified processing
+    if isinstance(image_paths, str):
+        image_paths = [image_paths]
+    
     results = []
     
     for i, image_path in enumerate(image_paths):
         try:
             print(f"\nProcessing image {i+1}/{len(image_paths)}: {image_path}")
             
-            # Preprocess the image
-            processed_digit = preprocess_handwritten_digit(image_path, display=display)
+            # Extract digit name from filename for folder creation
+            filename = os.path.basename(image_path)
+            digit_name = ""
             
-            # Make prediction
+            # Try to extract the digit name (e.g., "one", "two") from the filename
+            if "digit_" in filename:
+                digit_part = filename.split("digit_")[1]
+                digit_name = digit_part.split(".")[0]  # Remove file extension
+            
+            # Preprocess the image (without displaying)
+            processed_digit, original_image = preprocess_handwritten_digit(
+                image_path, display=False, return_original=True)
+            
+            # Make prediction (without displaying)
             predicted_digit, confidence, prediction_array = predict_digit(
-                model, processed_digit, display=display)
+                model, processed_digit, display=False)
+            
+            # Create visualization with both the preprocessed image and prediction probabilities
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+            
+            # Plot preprocessed image
+            ax1.imshow(processed_digit, cmap='gray')
+            ax1.set_title(f"Preprocessed Digit")
+            ax1.axis('off')
+            
+            # Plot prediction probabilities
+            bars = ax2.bar(range(10), prediction_array)
+            ax2.set_xticks(range(10))
+            ax2.set_xlabel('Digit')
+            ax2.set_ylabel('Probability')
+            ax2.set_title(f'Prediction: {predicted_digit} (Confidence: {confidence:.2f}%)')
+            ax2.set_ylim(0, 1)
+            
+            # Highlight the predicted digit's bar
+            bars[predicted_digit].set_color('red')
+            
+            plt.tight_layout()
+            
+            # Save the visualization if requested
+            if save_results:
+                # Create base save directory if it doesn't exist
+                os.makedirs(save_dir, exist_ok=True)
+                
+                # Create digit-specific subdirectory
+                if digit_name:
+                    digit_save_dir = os.path.join(save_dir, f"{digit_name}")
+                else:
+                    digit_save_dir = os.path.join(save_dir, f"digit_{predicted_digit}")
+                
+                os.makedirs(digit_save_dir, exist_ok=True)
+                
+                # Extract the base filename without extension
+                base_filename = os.path.splitext(os.path.basename(image_path))[0]
+                save_path = os.path.join(digit_save_dir, f"{base_filename}_prediction.png")
+                
+                plt.savefig(save_path)
+                print(f"Saved visualization to {save_path}")
+            
+            # Display the visualization if requested
+            if display:
+                plt.show()
+            else:
+                plt.close()
             
             # Store results
             results.append({
                 'image_path': image_path,
                 'predicted_digit': int(predicted_digit),
                 'confidence': float(confidence),
-                'prediction_array': prediction_array.tolist()
+                'prediction_array': prediction_array.tolist(),
+                'visualization_path': save_path if save_results else None
             })
             
         except Exception as e:
@@ -460,6 +563,50 @@ def load_model(model_path: str) -> keras.Sequential:
     model = keras.models.load_model(model_path)
     print(f"Model loaded successfully from {model_path}")
     return model
+
+
+def sample_and_view_test_data(test_data: tf.data.Dataset,
+                                 num_samples: int = 10) -> None:
+    """
+    Sample random images from test data and plot.
+    
+    Parameters:
+    -----------
+    test_data : tf.data.Dataset
+        Test dataset
+    num_samples : int
+        Number of random samples to select
+    """
+    # Get the test dataset as NumPy arrays
+    test_images = []
+    test_labels = []
+
+    # Take the first batch from test_data
+    for images, labels in test_data.take(1):
+        test_images = images.numpy()
+        test_labels = labels.numpy()
+
+    # Select a random subset of images
+    sample_indices = random.sample(range(len(test_images)), num_samples)
+    sample_images = test_images[sample_indices]
+    sample_labels = test_labels[sample_indices]
+
+    # Plot the sample images with their true labels
+    plt.figure(figsize=(15, 8))
+    for i in range(num_samples):
+        plt.subplot(2, 5, i+1)
+        
+        # Reshape and display the image (removing the channel dimension)
+        plt.imshow(sample_images[i].reshape(28, 28), cmap='gray')
+        
+        # Display true labels
+        plt.title(f"True Label: {sample_labels[i]}")
+        plt.axis('off')
+
+    plt.tight_layout()
+    plt.suptitle("MNIST Sample Test Images", fontsize=16)
+    plt.subplots_adjust(top=0.88)
+    plt.show()
 
 
 def sample_and_predict_test_data(model: keras.Sequential, 
@@ -525,3 +672,119 @@ def sample_and_predict_test_data(model: keras.Sequential,
         confidence = predictions[i][predicted_labels[i]] * 100
         result = "✓" if predicted_labels[i] == sample_labels[i] else "✗"
         print(f"Sample {i+1}: True={sample_labels[i]}, Predicted={predicted_labels[i]}, Confidence={confidence:.2f}%, {result}")
+
+
+# Example 1: Predict a single digit
+def predict_single_digit(model, image_path):
+    """Process and predict a single handwritten digit."""
+    print(f"\nProcessing single digit: {image_path}")
+    result = predict_digits(
+        model=model,
+        image_paths=image_path,
+        save_results=True,
+        save_dir='preprocessed_digits',
+        display=True
+    )
+    return result
+
+
+# Example 2: Predict all digits in the raw_digits folder
+def predict_all_digits(model, folder_path='raw_digits'):
+    """Process and predict all digit images in a folder."""
+    # Get all jpg/jpeg/png files in the folder
+    image_files = []
+    for ext in ['*.jpg', '*.jpeg', '*.png']:
+        image_files.extend(glob.glob(os.path.join(folder_path, ext)))
+    
+    if not image_files:
+        print(f"No image files found in {folder_path}")
+        return None
+    
+    print(f"\nProcessing {len(image_files)} digit images from {folder_path}")
+    results = predict_digits(
+        model=model,
+        image_paths=image_files,
+        save_results=True,
+        save_dir='preprocessed_digits',
+        display=True
+    )
+    return results
+
+
+# Example 4: Analyze prediction results
+def analyze_results(results):
+    """Analyze the prediction results."""
+    if not results:
+        print("No results to analyze")
+        return
+    
+    # Count correct predictions (assuming filename contains true digit)
+    correct = 0
+    total = 0
+    confidences = []
+    
+    for result in results:
+        if 'error' in result:
+            print(f"Error in {result['image_path']}: {result['error']}")
+            continue
+        
+        # Try to extract the true digit from the filename
+        filename = os.path.basename(result['image_path'])
+        predicted = result['predicted_digit']
+        confidence = result['confidence']
+        confidences.append(confidence)
+        
+        # Assume filename contains digit name like "one", "two", etc.
+        if "digit_" in filename:
+            digit_name = filename.split("digit_")[1].split(".")[0]
+            digit_map = {
+                "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,
+                "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9
+            }
+            true_digit = digit_map.get(digit_name.lower())
+            
+            if true_digit is not None:
+                total += 1
+                if predicted == true_digit:
+                    correct += 1
+                print(f"Image: {filename}, True: {true_digit}, Predicted: {predicted}, Confidence: {confidence:.2f}%")
+        else:
+            print(f"Image: {filename}, Predicted: {predicted}, Confidence: {confidence:.2f}%")
+    
+    # Print summary statistics
+    if total > 0:
+        accuracy = correct / total * 100
+        print(f"\nAccuracy: {accuracy:.2f}% ({correct}/{total})")
+    
+    if confidences:
+        avg_confidence = sum(confidences) / len(confidences)
+        print(f"Average confidence: {avg_confidence:.2f}%")
+
+
+
+
+
+# Example usage
+if __name__ == "__main__":
+    # Load a trained model
+    try:
+        model = keras.models.load_model('mnist_cnn_model.h5')
+        
+        # Example with single image
+        single_result = predict_digits(
+            model, 
+            'raw_digits/handwritten_digit_two.jpg', 
+            save_results=True
+        )
+        
+        # Example with multiple images
+        import glob
+        image_files = glob.glob('raw_digits/handwritten_digit_*.jpg')
+        batch_results = predict_digits(
+            model, 
+            image_files, 
+            save_results=True
+        )
+        
+    except Exception as e:
+        print(f"Error in example usage: {str(e)}")
