@@ -175,3 +175,4 @@ cython_debug/
 
 # Hyperparameter tuning
 hyperparam_folder/
+mnist_hyperparameter_tuning/
