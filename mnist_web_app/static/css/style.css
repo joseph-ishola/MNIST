@@ -1,0 +1,110 @@
+/* Main Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    padding-top: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+h1 {
+    color: #343a40;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* Canvas and Drawing */
+canvas {
+    border: 2px solid #dee2e6;
+    border-radius: 5px;
+    cursor: crosshair;
+}
+
+#drawing-board {
+    background-color: black;
+}
+
+#processed-canvas {
+    background-color: black;
+    border: 1px solid #dee2e6;
+    margin-top: 10px;
+}
+
+.drawing-container {
+    position: relative;
+}
+
+.drawing-tools {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.thickness-control {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Result Display */
+#result-container {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 5px;
+    display: none;
+    background-color: #f8f9fa;
+}
+
+.digit-box {
+    font-size: 72px;
+    font-weight: bold;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.top-predictions {
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: white;
+}
+
+.confidence-bar {
+    height: 24px;
+    border-radius: 4px;
+    background-color: #28a745;
+}
+
+.processing-stages {
+    margin-top: 15px;
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: white;
+}
+
+.stage-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* Buttons */
+.btn-control {
+    width: 120px;
+    margin: 5px;
+}
+
+/* Helper Text */
+.help-text {
+    font-size: 14px;
+    color: #6c757d;
+    margin-top: 5px;
+}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MNIST Digit Recognition</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>MNIST Digit Recognition</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Draw a digit (0-9)</h3>
+                <div class="drawing-container">
+                    <canvas id="drawing-board" width="280" height="280"></canvas>
+                </div>
+                <div class="drawing-tools">
+                    <div class="mb-3">
+                        <label for="pen-thickness" class="form-label">Pen Thickness: <span id="thickness-value">20</span>px</label>
+                        <input type="range" class="form-range" id="pen-thickness" min="10" max="40" value="20">
+                    </div>
+                    <button id="clear-button" class="btn btn-secondary btn-control">Clear</button>
+                    <button id="predict-button" class="btn btn-primary btn-control">Predict</button>
+                </div>
+                <p class="help-text">Draw a digit in the center of the canvas. Use the clear button to start over.</p>
+            </div>
+            <div class="col-md-6">
+                <h3>Recognition Result</h3>
+                <div id="result-container">
+                    <div class="digit-box" id="predicted-digit">?</div>
+                    <div class="top-predictions">
+                        <h5>Top 3 Predictions</h5>
+                        <div id="top-predictions-container"></div>
+                    </div>
+                    <div class="processing-stages">
+                        <h5>Processed Image</h5>
+                        <p class="help-text">This is how your drawing is processed before feeding to the model.</p>
+                        <div class="text-center">
+                            <img id="processed-image" width="140" height="140" style="background: black;">
+                        </div>
+                    </div>
+                </div>
+                <div id="loading" class="text-center" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Processing...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
