@@ -1,168 +1,200 @@
-# MNIST Digit Classification Using Deep Neural Networks
+# MNIST Digit Recognition Web Application
 
-This project implements and evaluates a Deep Neural Network (DNN) for handwritten digit classification using the MNIST dataset.
+A web-based application for handwritten digit recognition using machine learning models. This application allows users to draw digits on a canvas and get real-time predictions from multiple trained neural network models.
 
-## Project Overview
+![MNIST Web App Screenshot](screenshot.png)
 
-The MNIST dataset consists of 70,000 grayscale images (28×28 pixels) of handwritten digits (0-9). The goal is to build a neural network that accurately classifies these digits. This project serves as a baseline implementation before moving to more complex architectures like CNNs.
+## Features
 
-## Dataset
+- **Real-time Digit Recognition**: Draw a digit and get instant predictions
+- **Multiple Model Support**: Compare different machine learning models on the same input
+- **Model Comparison**: See how different architectures perform side-by-side
+- **Consensus Analysis**: Get insights into model agreement and confidence
+- **Visualization**: View the preprocessed image that's fed to the models
+- **Responsive Design**: Works on both desktop and mobile devices
 
-- **Source**: MNIST handwritten digit database
-- **Features**: 28×28 pixel grayscale images (784 features when flattened)
-- **Target**: Digit class (0-9)
-- **Size**: 70,000 total images
-  - 60,000 training images (with 6,000 used for validation)
-  - 10,000 test images
+## Technologies Used
 
-## Data Preprocessing
+- **Backend**: Flask (Python)
+- **Frontend**: HTML5, CSS3, JavaScript
+- **Machine Learning**: TensorFlow/Keras
+- **Image Processing**: OpenCV, SciPy
+- **Data Visualization**: Bootstrap progress bars
 
-The following preprocessing steps were applied:
-- Scaling pixel values from [0-255] to [0-1] for numerical stability
-- Flattening 28×28 images to 784-dimensional vectors for the DNN
-- Shuffling the training data with a fixed seed (42) for reproducibility
-- Batching the data with a batch size of 100 (determined through experimentation)
+## Installation
 
-## Model Development
+### Prerequisites
 
-### Initial Model Architecture
-- Input layer: 784 neurons (flattened 28×28 images)
-- Hidden layers: 2 layers with 50 neurons each using ReLU activation
-- Output layer: 10 neurons with softmax activation
-- Loss function: Sparse Categorical Cross-Entropy
-- Optimizer: Adam with default settings
+- Python 3.8 or higher
+- pip (Python package manager)
+- Virtual environment (recommended)
 
-### Hyperparameter Tuning
+### Setup Instructions
 
-#### Manual Tuning
-We experimented with several hyperparameters:
+1. Clone the repository (or download and extract the ZIP file):
+   ```
+   git clone https://github.com/yourusername/mnist-web-app.git
+   cd mnist-web-app
+   ```
 
-1. **Width of Hidden Layers**:
-   - 50 neurons → val_accuracy: 0.9740
-   - 100 neurons → val_accuracy: 0.9808
-   - 200 neurons → val_accuracy: 0.9885
+2. Create and activate a virtual environment (optional but recommended):
+   ```
+   python -m venv venv
+   
+   # On Windows
+   venv\Scripts\activate
+   
+   # On macOS/Linux
+   source venv/bin/activate
+   ```
 
-2. **Depth of Network**:
-   - 2 hidden layers (baseline)
-   - 3 hidden layers (200 neurons each) → val_accuracy: 0.9860
-   - 4 hidden layers (200 neurons each) → val_accuracy: 0.9845
-   - 4 hidden layers (300 neurons each) → val_accuracy: 0.9878
-   - 5 hidden layers (300 neurons each) → val_accuracy: 0.9828
+3. Install the required packages:
+   ```
+   pip install -r requirements.txt
+   ```
 
-3. **Activation Functions**:
-   - ReLU (baseline)
-   - Sigmoid → val_accuracy: 0.9725
-   - Tanh → val_accuracy: 0.9825
+4. Create the models directory and add your trained models:
+   ```
+   mkdir -p models
+   
+   # Copy your trained models to the models directory
+   cp path/to/your/model.h5 models/
+   ```
 
-4. **Batch Size**:
-   - 100 (baseline)
-   - 1000 → val_accuracy: 0.9685
-   - 10000 → val_accuracy: 0.9053
-   - 1 → val_accuracy: 0.9433 (with much longer training time)
+5. Create JSON metadata files for your models (optional but recommended):
+   ```
+   # Example: Create a file named models/your_model_name.json
+   {
+     "display_name": "User-Friendly Model Name",
+     "description": "Brief description of the model architecture and performance"
+   }
+   ```
 
-5. **Learning Rate**:
-   - Adam default (baseline)
-   - 0.0001 → val_accuracy: 0.9608 (slower convergence)
-   - 0.02 → similar performance to baseline
+6. Run the application:
+   ```
+   python app.py
+   ```
 
-Based on manual tuning, the best configuration was:
-- 2 hidden layers with 200 neurons each
-- ReLU activation
-- Batch size of 100
-- Adam optimizer with default learning rate
+7. Open your web browser and navigate to:
+   ```
+   http://127.0.0.1:5000/
+   ```
 
-#### Automated Random Search
-We used Keras Tuner to perform random search across:
-- Number of layers (1-6)
-- Number of neurons per layer (32-512)
-- Activation functions (ReLU, sigmoid, tanh)
-- Learning rate (10^-4 to 10^-2)
+## Project Structure
 
-The best hyperparameters found through random search were:
-- 1 hidden layer with 400 neurons
-- Sigmoid activation
-- Learning rate of approximately 0.002
-
-## Model Results
-
-### Base Model (Initial Configuration)
-- Training accuracy: 96.15%
-- Validation accuracy: 98.40%
-
-### Manually Tuned Model
-- Training accuracy: 98.04% 
-- Validation accuracy: 99.85%
-
-### Best Model (Random Search)
-- Training accuracy: 99.96%
-- Validation accuracy: 100.00%
-- Test accuracy: 98.36%
-- Total parameters: 318,010
-
-## Model Testing and Evaluation
-
-### MNIST Test Set
-The model achieved 98.36% accuracy on the test set, which is strong performance for a DNN model on this dataset.
-
-### Random Samples
-Testing on 10 random samples from the test set showed:
-- 100% accuracy
-- High confidence (nearly all predictions at 100% confidence)
-
-### Custom Handwritten Digits
-Testing on custom handwritten digits showed mixed results:
-- Handwritten '2': Correctly classified with 99.87% confidence
-- Handwritten '7': Misclassified as '1' with 64.07% confidence
-
-This highlights the model's limitations when dealing with inputs that differ from the training distribution.
-
-## Limitations and Future Directions
-
-### Limitations of the DNN Approach
-- Lacks spatial understanding of the image structure
-- Sensitive to variations in positioning, orientation, and style
-- Requires more parameters than CNNs for comparable performance
-- Less robust to real-world handwritten digits
-
-### Future Improvements
-1. Implement Convolutional Neural Networks (CNNs) to capture spatial relationships
-2. Apply data augmentation techniques to improve robustness
-3. Explore regularization methods to enhance generalization
-4. Implement early stopping to prevent overfitting
-5. Test with more diverse handwritten samples
-
-## Usage
-
-### Dependencies
-- TensorFlow 2.x
-- Keras
-- NumPy
-- Matplotlib
-- Keras Tuner (for hyperparameter optimization)
-- OpenCV (for custom image preprocessing)
-
-### Running the Code
-1. Ensure all dependencies are installed
-2. Run the Jupyter notebook to train and evaluate the model
-3. Use the provided functions to test on custom handwritten digits
-
-```python
-# Example of loading a saved model
-from tensorflow import keras
-model = keras.models.load_model('mnist_dnn_model.h5')
-
-# Example of testing on a custom image
-processed_digit = preprocess_handwritten_digit("your_digit.jpg")
-predicted_digit, confidence, _ = predict_digit(model, processed_digit)
-print(f"Predicted digit: {predicted_digit}, Confidence: {confidence:.2f}%")
+```
+mnist-web-app/
+├── app.py                    # Flask application
+├── requirements.txt          # Python dependencies
+├── models/                   # Trained models
+│   ├── model1.h5             # TensorFlow/Keras model files
+│   ├── model1.json           # Model metadata (optional)
+│   └── ...
+├── static/                   # Static files
+│   ├── css/
+│   │   └── style.css         # CSS styles
+│   ├── js/
+│   │   └── script.js         # JavaScript functionality
+│   └── img/                  # Images (optional)
+└── templates/
+    └── index.html            # HTML template
 ```
 
-## Conclusion
+## Usage Guide
 
-While our DNN achieves impressive accuracy on the MNIST test set, its performance on custom handwritten digits reveals limitations in generalization. This makes a strong case for transitioning to CNN architectures, which are better suited for image classification tasks due to their ability to capture spatial features and provide translation invariance.
+### Drawing a Digit
 
-The project demonstrates the value of establishing a strong baseline model before moving to more complex architectures, and highlights the importance of evaluating models on diverse inputs beyond the standard test set.
+1. Use your mouse or finger (on touch devices) to draw a digit on the black canvas
+2. Adjust the pen thickness using the slider if needed
+3. The prediction will appear automatically after you finish drawing
+4. Click "Clear" to erase and start over
+
+### Selecting a Model
+
+1. Use the dropdown menu at the top to select a specific model
+2. The model description will update to show details about the selected model
+3. Draw a digit to get predictions from the selected model
+
+### Comparing Models
+
+1. Draw a digit on the canvas
+2. Click the "Compare All Models" button
+3. View side-by-side results from all available models
+4. The models are sorted by confidence (highest first)
+5. Models that agree with the top model are highlighted in green
+6. The consensus analysis shows how many models agree on the classification
+
+## Adding New Models
+
+To add additional models to the application:
+
+1. Train a new model using TensorFlow/Keras
+2. Save the model in H5 format to the `models` directory
+3. Create a JSON metadata file with the same name as your model
+
+Example metadata JSON file (`models/my_new_model.json`):
+```json
+{
+  "display_name": "My New Model",
+  "description": "CNN with 3 convolutional layers, batch normalization, and dropout. Trained for 25 epochs with 99.2% test accuracy."
+}
+```
+
+4. Restart the application (or use the `/reload_models` endpoint)
+
+## API Endpoints
+
+- **`/`**: Main application page
+- **`/predict`**: POST endpoint for digit prediction
+- **`/list_models`**: GET endpoint to retrieve available models
+- **`/reload_models`**: POST endpoint to reload models without restarting
+
+## Model Preprocessing
+
+The application uses a specialized preprocessing pipeline to prepare hand-drawn digits for the models:
+
+1. Grayscale conversion
+2. Gaussian blur to reduce noise
+3. Binary thresholding
+4. Contour detection to identify the digit
+5. Center of mass alignment for accurate positioning
+6. Scaling to match MNIST format (28x28 pixels)
+
+This preprocessing ensures that hand-drawn digits closely match the MNIST format that the models were trained on.
+
+## Performance Optimization
+
+- Debouncing is used to avoid multiple predictions while drawing
+- Images are processed on the server side for consistent results
+- Model loading is done at startup to minimize prediction latency
+
+## Troubleshooting
+
+- **Model not found**: Ensure your model files are in the `models` directory
+- **Drawing issues**: Try adjusting the pen thickness or clearing the canvas
+- **Prediction errors**: Check browser console for JavaScript errors
+- **Server errors**: Check the Flask application logs for details
+
+## Future Improvements
+
+- Data collection for further model training
+- User accounts to track prediction history
+- More advanced visualizations (confusion matrices, t-SNE plots)
+- Support for other digit datasets beyond MNIST
+- Batch upload of multiple images
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- The MNIST dataset by Yann LeCun et al.
+- TensorFlow and Keras for machine learning functionality
+- Flask for the web framework
+- Bootstrap for frontend styling
+
+## Contact
+
+For questions, suggestions, or issues, please contact [joseph.arogunyo@gmail.com](mailto:joseph.arogunyo@gmail.com) or open an issue on GitHub.
+Let us connect on [LinkedIn][https://www.linkedin.com/in/joseph-ishola]
