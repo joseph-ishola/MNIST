@@ -2,7 +2,7 @@
 
 A web-based application for handwritten digit recognition using machine learning models. This application allows users to draw digits on a canvas and get real-time predictions from multiple trained neural network models.
 
-![MNIST Web App Screenshot](screenshot.png)
+![MNIST Web App Screenshot](Screenshot.png)
 
 ## Features
 
