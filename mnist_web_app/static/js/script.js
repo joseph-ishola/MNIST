@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let isDrawing = false;
 
     // Set up drawing parameters
-    ctx.lineWidth = 20;
+    ctx.lineWidth = 10; // Changed from 20 to 10
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = 'white';
@@ -36,9 +36,9 @@ document.addEventListener('DOMContentLoaded', function() {
     clearButton.addEventListener('click', clearCanvas);
     predictButton.addEventListener('click', predictDigit);
 
-    // Enable auto-prediction
-    canvas.addEventListener('mouseup', debounce(predictDigit, 500));
-    canvas.addEventListener('touchend', debounce(predictDigit, 500));
+    // Enable auto-prediction with increased delay
+    canvas.addEventListener('mouseup', debounce(predictDigit, 1500)); // Increased from 500ms to 1500ms
+    canvas.addEventListener('touchend', debounce(predictDigit, 1500));
 
     /**
      * Initialize the canvas with a black background
