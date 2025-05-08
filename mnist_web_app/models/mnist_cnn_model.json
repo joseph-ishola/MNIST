@@ -1,0 +1,4 @@
+{
+    "display_name": "VGG-Style CNN",
+    "description": "VGG-style CNN with three convolutional layers and batch normalization. Trained with 99.29% accuracy on test set."
+}

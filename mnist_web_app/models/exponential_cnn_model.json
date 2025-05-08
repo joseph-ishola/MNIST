@@ -1,0 +1,4 @@
+{
+    "display_name": "Exponential CNN Model",
+    "description": "Convolutional Neural Network with exponential decay learning rate. Trained with 99.45% accuracy on test set."
+}
